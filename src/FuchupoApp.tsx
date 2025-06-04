@@ -13,7 +13,10 @@ function useNews(): Article[] {
   useEffect(() => {
     fetch("/fuchupo/news.json", { cache: "no-store" })
       .then((r) => r.json())
-      .then(setArticles)
+      .then((data: Article[]) => {
+        const sortedData = data.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+        setArticles(sortedData);
+      })
       .catch(console.error);
   }, []);
 
@@ -44,7 +47,11 @@ function formatPubDate(pubDate: string): string {
     }
     const yesterday = new Date(now);
     yesterday.setDate(nowDate - 1);
-    if (pubDateNum === yesterday.getDate()) {
+    if (
+      pubDateNum === yesterday.getDate() &&
+      pub.getMonth() === yesterday.getMonth() &&
+      pub.getFullYear() === yesterday.getFullYear()
+    ) {
       return "昨日";
     }
   }
