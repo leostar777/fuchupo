@@ -1,0 +1,29 @@
+name: Deploy to GitHub Pages via Vite
+on:
+  push:
+    branches: [main]     # main ブランチに push されたら実行
+  workflow_dispatch:
+
+jobs:
+  build:
+    permissions: write-all
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - run: |
+          git config --global user.email "bot@example.com"
+          git config --global user.name "pages-bot"
+          git --work-tree=dist add --all
+          git commit -m "Deploy" || exit 0
+          git push -f origin HEAD:gh-pages
+        env:
+          GIT_AUTHOR_NAME: pages-bot
+          GIT_AUTHOR_EMAIL: bot@example.com
+          GIT_COMMITTER_NAME: pages-bot
+          GIT_COMMITTER_EMAIL: bot@example.com
+          GH_TOKEN: ${{ secrets.GH_BOT_PAT }}
