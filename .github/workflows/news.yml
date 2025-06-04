@@ -1,7 +1,7 @@
 name: Fetch News RSS
 on:
   schedule:
-    - cron: "*/10 * * * *"   # 10分ごと
+    - cron: "*/10 * * * *"
   workflow_dispatch:
 
 jobs:
@@ -10,12 +10,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: gh-pages               # ★ gh-pages をチェックアウト
+
       - run: |
           mkdir -p public
-          npx rss-to-json "https://news.google.com/rss/search?q=府中市&hl=ja&gl=JP&ceid=JP:ja" > public/news.json
+          curl -s "https://news.google.com/rss/search?q=府中市&hl=ja&gl=JP&ceid=JP:ja" \
+            | npx rss2json-cli -o public/news.json
+
       - run: |
           git config --global user.email "bot@example.com"
-          git config --global user.name "news-bot"
+          git config --global user.name  "news-bot"
           git add public/news.json
           git commit -m "chore: update news" || exit 0
           git push
