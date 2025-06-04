@@ -1,4 +1,3 @@
-import { useNews } from "@/lib/useNews";
 import { useEffect, useState } from "react";
 
 export interface Article {
@@ -10,7 +9,7 @@ export interface Article {
 export function useNews() {
   const [articles, setArticles] = useState<Article[]>([]);
   useEffect(() => {
-    fetch("/fuchupo/news.json", { cache: "no-store" })
+    fetch(import.meta.env.BASE_URL + "news.json", { cache: "no-store" })
       .then((r) => r.json())
       .then(setArticles)
       .catch(console.error);
