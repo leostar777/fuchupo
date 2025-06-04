@@ -1,15 +1,35 @@
 import { useEffect, useState } from "react";
-import { useNews } from "./lib/useNews";
 
 /**
  * FuchupoApp – ニュースカードの見栄えを Yahoo! ニュース風に刷新
  * -----------------------------------------------------------------
- * - 左にサムネ（無ければダミー）/ 右にタイトル＋メタ情報
- * - ホバーで背景色を薄緑に
- * - ヘッダー固定幅（max‑width: 680px）
- * - 依存ライブラリゼロのまま純粋な CSS in JS
+ * - 外部依存 (./lib/useNews) を廃止し、このファイル内に `useNews` を実装
+ * - 左サムネ（ダミー）＋右テキストの横並びカード
+ * - Vite 環境のみで完結（追加モジュール不要）
  */
 
+// ───────── 型定義 & フック ─────────
+interface Article {
+  title: string;
+  link: string;
+  pubDate: string;
+}
+
+function useNews(): Article[] {
+  const [articles, setArticles] = useState<Article[]>([]);
+
+  useEffect(() => {
+    // GitHub Pages では base が "/fuchupo/" になるため import.meta.env.BASE_URL を使用
+    fetch(import.meta.env.BASE_URL + "public/news.json", { cache: "no-store" })
+      .then((r) => r.json())
+      .then(setArticles)
+      .catch(console.error);
+  }, []);
+
+  return articles;
+}
+
+// ───────── ルートコンポーネント ─────────
 export default function FuchupoApp() {
   const news = useNews();
   const [now, setNow] = useState(() => new Date());
@@ -47,6 +67,7 @@ export default function FuchupoApp() {
   );
 }
 
+// ───────── 子コンポーネント / Card ─────────
 interface CardProps {
   title: string;
   link: string;
@@ -73,10 +94,10 @@ function NewsCard({ title, link, time }: CardProps) {
   );
 }
 
-// ───────── simple inline CSS objects
+// ───────── simple inline CSS objects ─────────
 const styles: Record<string, React.CSSProperties> = {
   root: {
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans JP', sans‑serif",
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans JP', sans-serif",
     maxWidth: 680,
     margin: "0 auto",
     padding: 16,
