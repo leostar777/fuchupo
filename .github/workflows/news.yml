@@ -32,7 +32,7 @@ jobs:
             const items = feed.items.map(({ title, link, pubDate }) => ({
               title, link, pubDate
             }));
-            fs.writeFileSync('news.json', JSON.stringify(items, null, 2));
+            fs.writeFileSync('public/news.json', JSON.stringify(items, null, 2));
           })();
           NODE
 
