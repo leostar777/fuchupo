@@ -1,23 +1,24 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNews } from "./lib/useNews";
 
 /**
- * FuchupoApp ― 依存ライブラリを一切使わない最小実装
- * ------------------------------------------------------
- * - ヘッダーに日時・天気（ダミー）を横並び表示
- * - ニュース JSON を読み込んで一覧表示
- * ※ shadcn/ui や lucide-react が無くてもビルドが通るよう、純粋な HTML 要素だけで構築
+ * FuchupoApp – ニュースカードの見栄えを Yahoo! ニュース風に刷新
+ * -----------------------------------------------------------------
+ * - 左にサムネ（無ければダミー）/ 右にタイトル＋メタ情報
+ * - ホバーで背景色を薄緑に
+ * - ヘッダー固定幅（max‑width: 680px）
+ * - 依存ライブラリゼロのまま純粋な CSS in JS
  */
 
 export default function FuchupoApp() {
-  const [now, setNow] = useState(() => new Date());
   const news = useNews();
+  const [now, setNow] = useState(() => new Date());
 
-  // simple 1‑minute timer for clock
-  useState(() => {
+  // 1 分おきに時計を更新
+  useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(id);
-  });
+  }, []);
 
   const datetimeStr = now.toLocaleString("ja-JP", {
     month: "2-digit",
@@ -28,25 +29,82 @@ export default function FuchupoApp() {
   });
 
   return (
-    <div style={{ fontFamily: "sans-serif", maxWidth: 640, margin: "0 auto", padding: 16 }}>
-      {/* Header */}
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <strong>ふちゅぽ</strong>
-        <span style={{ fontSize: 12 }}>{datetimeStr} / ☀️24°C</span>
+    <div style={styles.root}>
+      {/* ───────── Header */}
+      <header style={styles.header}>
+        <strong style={{ fontSize: 20 }}>ふちゅぽ</strong>
+        <span style={{ fontSize: 12, color: "#666" }}>{datetimeStr} / ☀️24°C</span>
       </header>
 
-      {/* News list */}
+      {/* ───────── News list */}
       <main>
         {!news.length && <p>Fetching…</p>}
         {news.map((n, idx) => (
-          <article key={idx} style={{ marginBottom: 12 }}>
-            <a href={n.link} target="_blank" rel="noopener noreferrer" style={{ fontWeight: "bold" }}>
-              {n.title}
-            </a>
-            <div style={{ fontSize: 12, color: "gray" }}>{new Date(n.pubDate).toLocaleTimeString()}</div>
-          </article>
+          <NewsCard key={idx} title={n.title} link={n.link} time={n.pubDate} />
         ))}
       </main>
     </div>
   );
 }
+
+interface CardProps {
+  title: string;
+  link: string;
+  time: string;
+}
+
+function NewsCard({ title, link, time }: CardProps) {
+  return (
+    <a href={link} target="_blank" rel="noopener noreferrer" style={styles.card}>
+      {/* 左サムネ（ダミー画像） */}
+      <img
+        src="https://placehold.co/96x64?text=IMG"
+        alt="thumb"
+        width={96}
+        height={64}
+        style={{ flexShrink: 0, borderRadius: 4, objectFit: "cover" }}
+      />
+      {/* 右テキスト */}
+      <div style={{ marginLeft: 12, flex: 1 }}>
+        <h2 style={styles.title}>{title}</h2>
+        <div style={styles.meta}>{new Date(time).toLocaleTimeString()}</div>
+      </div>
+    </a>
+  );
+}
+
+// ───────── simple inline CSS objects
+const styles: Record<string, React.CSSProperties> = {
+  root: {
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans JP', sans‑serif",
+    maxWidth: 680,
+    margin: "0 auto",
+    padding: 16,
+  },
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  card: {
+    display: "flex",
+    textDecoration: "none",
+    color: "inherit",
+    padding: 8,
+    borderBottom: "1px solid #eee",
+    borderRadius: 4,
+    transition: "background-color 0.15s",
+  },
+  title: {
+    fontSize: 15,
+    fontWeight: 600,
+    lineHeight: 1.4,
+    margin: 0,
+  },
+  meta: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 4,
+  },
+};
