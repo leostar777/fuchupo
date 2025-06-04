@@ -36,14 +36,15 @@ jobs:
           })();
           NODE
 
-      # 4) 競合を避けて push
+      # 4) Git設定 & push
       - name: Commit & push
         env:
           GH_TOKEN: ${{ secrets.GH_BOT_PAT }}
         run: |
           git config --global user.email "bot@example.com"
           git config --global user.name  "news-bot"
-          git pull --rebase origin main        # ←★ 必須：直前の変更を取り込む
-          git add news.json
+
+          git add public/news.json
           git commit -m "chore: update news" || echo "No changes"
+          git pull --rebase origin main
           git push origin main
