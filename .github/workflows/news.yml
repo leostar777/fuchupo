@@ -1,7 +1,7 @@
-name: Fetch News RSS to public/news.json
+name: Fetch News RSS to news.json
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/10 * * * *"     # 10 分ごと
   workflow_dispatch:
 
 jobs:
@@ -11,39 +11,39 @@ jobs:
       contents: write          # main へ push する権限
 
     steps:
-      - uses: actions/checkout@v4   # main ブランチ
+      # 1) main ブランチをチェックアウト
+      - uses: actions/checkout@v4
 
-      - run: npm install rss-parser@^3.12.0
+      # 2) rss-parser をインストール
+      - name: Install rss-parser
+        run: npm install rss-parser@^3.12.0
 
-      - name: Convert RSS → JSON
+      # 3) RSS → JSON へ変換
+      - name: Convert RSS to JSON
         run: |
           node - <<'NODE'
           const fs = require('fs');
           const Parser = require('rss-parser');
           const parser = new Parser();
-
-          // 日本語クエリをエンコード
-          const encoded = encodeURI(
-            'https://news.google.com/rss/search?q=府中市&hl=ja&gl=JP&ceid=JP:ja'
-          );
-
           (async () => {
-            const feed = await parser.parseURL(encoded);
+            const feed = await parser.parseURL(encodeURI(
+              'https://news.google.com/rss/search?q=府中市&hl=ja&gl=JP&ceid=JP:ja'
+            ));
             const items = feed.items.map(({ title, link, pubDate }) => ({
               title, link, pubDate
             }));
-            fs.mkdirSync('public', { recursive: true });
-            fs.writeFileSync('public/news.json', JSON.stringify(items, null, 2));
+            fs.writeFileSync('news.json', JSON.stringify(items, null, 2));
           })();
           NODE
 
+      # 4) 競合を避けて push
       - name: Commit & push
-  env:
-    GH_TOKEN: ${{ secrets.GH_BOT_PAT }}
-  run: |
-    git config --global user.email "bot@example.com"
-    git config --global user.name  "news-bot"
-    git pull --rebase origin main         # ★ 最新を取り込んで衝突回避
-    git add public/news.json
-    git commit -m "chore: update news feed" || echo "No changes"
-    git push origin main                  # fast-forward OK
+        env:
+          GH_TOKEN: ${{ secrets.GH_BOT_PAT }}
+        run: |
+          git config --global user.email "bot@example.com"
+          git config --global user.name  "news-bot"
+          git pull --rebase origin main        # ←★ 必須：直前の変更を取り込む
+          git add news.json
+          git commit -m "chore: update news" || echo "No changes"
+          git push origin main
