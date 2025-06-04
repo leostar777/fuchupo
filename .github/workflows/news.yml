@@ -44,7 +44,7 @@ jobs:
           git config --global user.email "bot@example.com"
           git config --global user.name  "news-bot"
 
-          git add public/news.json
+          git add -A
           git commit -m "chore: update news" || echo "No changes"
           git pull --rebase origin main
           git push origin main
