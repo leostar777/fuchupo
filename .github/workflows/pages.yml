@@ -1,31 +1,34 @@
-name: Deploy to GitHub Pages via Vite
+name: Build and deploy to GitHub Pages
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  pages: write
+  id-token: write
+  contents: read
+
 jobs:
   build:
-    permissions: write-all        # gh-pages へ push するため
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
-
-      # 🟢 Node + npm でインストール
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - run: npm install
+      - run: npm run build          # dist/ 作成
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist               # dist をアップロード
 
-      - run: npm install          # lockfile が無くても通る
-      - run: npm run build        # Vite build → dist/
-
-      # dist を gh-pages ブランチへ force-push
-      - run: |
-          git config --global user.email "bot@example.com"
-          git config --global user.name  "pages-bot"
-          git --work-tree=dist add --all
-          git commit -m "Deploy" || exit 0
-          git push -f origin HEAD:gh-pages
-        env:
-          GH_TOKEN: ${{ secrets.GH_BOT_PAT }}
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
