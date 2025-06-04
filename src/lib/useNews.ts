@@ -1,3 +1,4 @@
+import { useNews } from "@/lib/useNews";
 import { useEffect, useState } from "react";
 
 export interface Article {
