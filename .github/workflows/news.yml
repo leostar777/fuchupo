@@ -1,28 +1,37 @@
-name: Fetch News RSS
+name: Fetch News RSS to JSON
 on:
+  # 10 分ごとに実行
   schedule:
     - cron: "*/10 * * * *"
-  workflow_dispatch:
+  workflow_dispatch:     # 手動実行ボタンも有効
 
 jobs:
   update:
-    permissions: write-all
     runs-on: ubuntu-latest
+    permissions:
+      contents: write     # gh-pages へ push する権限
+
     steps:
+      # 1) gh-pages ブランチを直接チェックアウト
       - uses: actions/checkout@v4
         with:
-          ref: gh-pages               # ★ gh-pages をチェックアウト
+          ref: gh-pages        # ← ここが main でなく gh-pages
 
-      - run: |
-          mkdir -p public
+      # 2) RSS → JSON へ変換してルート直下に配置
+      - name: Convert RSS to JSON
+        run: |
           curl -s "https://news.google.com/rss/search?q=府中市&hl=ja&gl=JP&ceid=JP:ja" \
-            | npx rss2json-cli -o public/news.json
+          | npx --yes rss2json-cli -o news.json
 
-      - run: |
-          git config --global user.email "bot@example.com"
-          git config --global user.name  "news-bot"
-          git add public/news.json
-          git commit -m "chore: update news" || exit 0
-          git push
+      # 3) 変更があれば gh-pages にコミット & Push
+      - name: Commit & push
         env:
+          GIT_AUTHOR_NAME: news-bot
+          GIT_AUTHOR_EMAIL: bot@example.com
+          GIT_COMMITTER_NAME: news-bot
+          GIT_COMMITTER_EMAIL: bot@example.com
           GH_TOKEN: ${{ secrets.GH_BOT_PAT }}
+        run: |
+          git add news.json
+          git commit -m "chore: update news feed" || echo "No changes"
+          git push origin gh-pages
