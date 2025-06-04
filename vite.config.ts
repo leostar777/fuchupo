@@ -1,7 +1,1 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-
-export default defineConfig({
-  base: "/fuchupo/",              // GitHub Pages のサブパス
-  plugins: [react()],
-});
+	ts\nimport { defineConfig } from 'vite';\nimport react from '@vitejs/plugin-react';\nexport default defineConfig({\n base: '/fuchupo/',\n plugins: [react()],\n});\n
