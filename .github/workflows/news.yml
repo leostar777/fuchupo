@@ -1,0 +1,23 @@
+name: Fetch News RSS
+on:
+  schedule:
+    - cron: "*/10 * * * *"   # 10分ごと
+  workflow_dispatch:
+
+jobs:
+  update:
+    permissions: write-all
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          mkdir -p public
+          npx rss-to-json "https://news.google.com/rss/search?q=府中市&hl=ja&gl=JP&ceid=JP:ja" > public/news.json
+      - run: |
+          git config --global user.email "bot@example.com"
+          git config --global user.name "news-bot"
+          git add public/news.json
+          git commit -m "chore: update news" || exit 0
+          git push
+        env:
+          GH_TOKEN: ${{ secrets.GH_BOT_PAT }}
