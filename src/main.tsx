@@ -1,1 +1,9 @@
-tsx\nimport React from 'react';\nimport ReactDOM from 'react-dom/client';\nimport FuchupoApp from './FuchupoApp';\n\nReactDOM.createRoot(document.getElementById('root')!).render(\n <React.StrictMode>\n <FuchupoApp />\n </React.StrictMode>\n);\n
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import FuchupoApp from './FuchupoApp';
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <FuchupoApp />
+  </React.StrictMode>
+);
