@@ -20,7 +20,7 @@ function useNews(): Article[] {
 
   useEffect(() => {
     // GitHub Pages では base が "/fuchupo/" になるため import.meta.env.BASE_URL を使用
-    fetch(import.meta.env.BASE_URL + "/news.json", { cache: "no-store" })
+    fetch(import.meta.env.BASE_URL + "public/news.json", { cache: "no-store" })
       .then((r) => r.json())
       .then(setArticles)
       .catch(console.error);
