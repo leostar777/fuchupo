@@ -20,6 +20,38 @@ function useNews(): Article[] {
   return articles;
 }
 
+function formatPubDate(pubDate: string): string {
+  const now = new Date();
+  const pub = new Date(pubDate);
+
+  const diffMs = now.getTime() - pub.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+  if (diffHours < 12) {
+    return `${diffHours}時間前`;
+  }
+
+  const nowDate = now.getDate();
+  const pubDateNum = pub.getDate();
+  const nowMonth = now.getMonth();
+  const pubMonth = pub.getMonth();
+  const nowYear = now.getFullYear();
+  const pubYear = pub.getFullYear();
+
+  if (nowYear === pubYear && nowMonth === pubMonth) {
+    if (nowDate === pubDateNum) {
+      return pub.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric", weekday: "short" });
+    }
+    const yesterday = new Date(now);
+    yesterday.setDate(nowDate - 1);
+    if (pubDateNum === yesterday.getDate()) {
+      return "昨日";
+    }
+  }
+
+  return pub.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric", weekday: "short" });
+}
+
 // ―――――――――――― ルートコンポーネント ――――――――――――
 export default function FuchupoApp() {
   const news = useNews();
@@ -32,7 +64,6 @@ export default function FuchupoApp() {
   }, []);
 
   const dateStr = now.toLocaleDateString("ja-JP", {
-    year: "numeric",
     month: "2-digit",
     day: "2-digit",
     weekday: "short",
@@ -72,12 +103,7 @@ interface CardProps {
 }
 
 function NewsCard({ title, link, pubDate }: CardProps) {
-  const pubDateStr = new Date(pubDate).toLocaleDateString("ja-JP", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    weekday: "short",
-  });
+  const pubDateStr = formatPubDate(pubDate);
 
   return (
     <a href={link} target="_blank" rel="noopener noreferrer" style={styles.card}>
