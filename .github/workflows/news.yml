@@ -38,11 +38,12 @@ jobs:
           NODE
 
       - name: Commit & push
-        env:
-          GH_TOKEN: ${{ secrets.GH_BOT_PAT }}
-        run: |
-          git config --global user.email "bot@example.com"
-          git config --global user.name  "news-bot"
-          git add public/news.json
-          git commit -m "chore: update news" || echo "No changes"
-          git push
+  env:
+    GH_TOKEN: ${{ secrets.GH_BOT_PAT }}
+  run: |
+    git config --global user.email "bot@example.com"
+    git config --global user.name  "news-bot"
+    git pull --rebase origin main         # ★ 最新を取り込んで衝突回避
+    git add public/news.json
+    git commit -m "chore: update news feed" || echo "No changes"
+    git push origin main                  # fast-forward OK
