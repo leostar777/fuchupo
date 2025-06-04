@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNews } from "./lib/useNews"; // ルート基準の相対パスに変更
+import { useNews } from "./lib/useNews";
 
 /**
  * FuchupoApp ― 依存ライブラリを一切使わない最小実装
@@ -37,7 +37,7 @@ export default function FuchupoApp() {
 
       {/* News list */}
       <main>
-        {!news.length && <p>Loading…</p>}
+        {!news.length && <p>Fetching…</p>}
         {news.map((n, idx) => (
           <article key={idx} style={{ marginBottom: 12 }}>
             <a href={n.link} target="_blank" rel="noopener noreferrer" style={{ fontWeight: "bold" }}>
