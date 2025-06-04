@@ -1,13 +1,5 @@
 import { useEffect, useState } from "react";
 
-/**
- * FuchupoApp – ニュースカードの見栄えを Yahoo! ニュース風に刷新
- * -----------------------------------------------------------------
- * - 外部依存 (./lib/useNews) を廃止し、このファイル内に `useNews` を実装
- * - 左サムネ（ダミー）＋右テキストの横並びカード
- * - Vite 環境のみで完結（追加モジュール不要）
- */
-
 // ───────── 型定義 & フック ─────────
 interface Article {
   title: string;
@@ -19,7 +11,6 @@ function useNews(): Article[] {
   const [articles, setArticles] = useState<Article[]>([]);
 
   useEffect(() => {
-    // GitHub Pages では base が "/fuchupo/" になるため import.meta.env.BASE_URL を使用
     fetch(import.meta.env.BASE_URL + "/news.json", { cache: "no-store" })
       .then((r) => r.json())
       .then(setArticles)
@@ -33,16 +24,18 @@ function useNews(): Article[] {
 export default function FuchupoApp() {
   const news = useNews();
   const [now, setNow] = useState(() => new Date());
+  const [visibleCount, setVisibleCount] = useState(30); // ← 最初30件
 
-  // 1 分おきに時計を更新
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(id);
   }, []);
 
-  const datetimeStr = now.toLocaleString("ja-JP", {
+  const dateStr = now.toLocaleDateString("ja-JP", {
     month: "2-digit",
     day: "2-digit",
+  });
+  const timeStr = now.toLocaleTimeString("ja-JP", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
@@ -52,16 +45,31 @@ export default function FuchupoApp() {
     <div style={styles.root}>
       {/* ───────── Header */}
       <header style={styles.header}>
-        <strong style={{ fontSize: 20 }}>ふちゅぽ</strong>
-        <span style={{ fontSize: 12, color: "#666" }}>{datetimeStr} / ☀️24°C</span>
+        <div style={styles.leftHeader}>
+          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="ロゴ" style={styles.logo} />
+          <strong style={styles.title}>ふちゅぽ</strong>
+          <span style={styles.weather}>☀️24°C</span>
+        </div>
+        <div style={styles.rightHeader}>
+          <div style={styles.date}>{dateStr}</div>
+          <div style={styles.time}>{timeStr}</div>
+        </div>
       </header>
 
       {/* ───────── News list */}
       <main>
         {!news.length && <p>Fetching…</p>}
-        {news.map((n, idx) => (
+        {news.slice(0, visibleCount).map((n, idx) => (
           <NewsCard key={idx} title={n.title} link={n.link} time={n.pubDate} />
         ))}
+        {/* 「もっと見る」ボタン */}
+        {visibleCount < news.length && (
+          <div style={{ textAlign: "center", marginTop: 16 }}>
+            <button style={styles.loadMoreButton} onClick={() => setVisibleCount((v) => v + 30)}>
+              もっと見る
+            </button>
+          </div>
+        )}
       </main>
     </div>
   );
@@ -77,7 +85,6 @@ interface CardProps {
 function NewsCard({ title, link, time }: CardProps) {
   return (
     <a href={link} target="_blank" rel="noopener noreferrer" style={styles.card}>
-      {/* 左サムネ（ダミー画像） */}
       <img
         src="https://placehold.co/96x64?text=IMG"
         alt="thumb"
@@ -85,9 +92,8 @@ function NewsCard({ title, link, time }: CardProps) {
         height={64}
         style={{ flexShrink: 0, borderRadius: 4, objectFit: "cover" }}
       />
-      {/* 右テキスト */}
       <div style={{ marginLeft: 12, flex: 1 }}>
-        <h2 style={styles.title}>{title}</h2>
+        <h2 style={styles.cardTitle}>{title}</h2>
         <div style={styles.meta}>{new Date(time).toLocaleTimeString()}</div>
       </div>
     </a>
@@ -108,6 +114,33 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     marginBottom: 12,
   },
+  leftHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+  },
+  rightHeader: {
+    textAlign: "right",
+  },
+  logo: {
+    width: 32,
+    height: 32,
+  },
+  title: {
+    fontSize: 20,
+  },
+  weather: {
+    fontSize: 16,
+    marginLeft: 8,
+  },
+  date: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  time: {
+    fontSize: 12,
+    color: "#666",
+  },
   card: {
     display: "flex",
     textDecoration: "none",
@@ -117,7 +150,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 4,
     transition: "background-color 0.15s",
   },
-  title: {
+  cardTitle: {
     fontSize: 15,
     fontWeight: 600,
     lineHeight: 1.4,
@@ -127,5 +160,13 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 12,
     color: "#666",
     marginTop: 4,
+  },
+  loadMoreButton: {
+    padding: "8px 16px",
+    fontSize: 14,
+    cursor: "pointer",
+    borderRadius: 4,
+    border: "1px solid #ccc",
+    background: "#fff",
   },
 };
