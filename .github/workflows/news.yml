@@ -1,27 +1,19 @@
-name: Fetch News RSS to JSON
+name: Fetch News RSS to public/news.json
 on:
   schedule:
-    - cron: "*/10 * * * *"      # 10 分毎
+    - cron: "*/10 * * * *"   # 10分ごと
   workflow_dispatch:
 
 jobs:
   update:
     runs-on: ubuntu-latest
     permissions:
-      contents: write            # gh-pages へ push するため
+      contents: write        # main ブランチへ push
 
     steps:
-      # 1. gh-pages ブランチを直接チェックアウト
-      - uses: actions/checkout@v4
-        with:
-          ref: gh-pages
-
-      # 2. rss-parser をインストール
-      - name: Install rss-parser
-        run: npm install rss-parser@^3.12.0
-
-      # 3. Node スクリプトで RSS → news.json
-      - name: Convert RSS to JSON
+      - uses: actions/checkout@v4   # main ブランチ
+      - run: npm install rss-parser@^3.12.0
+      - name: Convert RSS → JSON
         run: |
           node - <<'NODE'
           const fs = require('fs');
@@ -32,21 +24,18 @@ jobs:
               'https://news.google.com/rss/search?q=府中市&hl=ja&gl=JP&ceid=JP:ja'
             );
             const items = feed.items.map(({ title, link, pubDate }) => ({
-              title,
-              link,
-              pubDate,
+              title, link, pubDate
             }));
-            fs.writeFileSync('news.json', JSON.stringify(items, null, 2));
+            fs.mkdirSync('public', { recursive: true });
+            fs.writeFileSync('public/news.json', JSON.stringify(items, null, 2));
           })();
           NODE
-
-      # 4. 変更があればコミット & push
       - name: Commit & push
         env:
           GH_TOKEN: ${{ secrets.GH_BOT_PAT }}
         run: |
           git config --global user.email "bot@example.com"
           git config --global user.name  "news-bot"
-          git add news.json
-          git commit -m "chore: update news feed" || echo "No changes"
-          git push origin gh-pages
+          git add public/news.json
+          git commit -m "chore: update news" || echo "No changes"
+          git push
