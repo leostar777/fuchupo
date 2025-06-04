@@ -1,7 +1,7 @@
 name: Fetch News RSS to news.json
 on:
   schedule:
-    - cron: "*/10 * * * *"     # 10 分ごと
+    - cron: "*/10 * * * *"     # 10分ごと
   workflow_dispatch:
 
 jobs:
@@ -24,14 +24,28 @@ jobs:
           node - <<'NODE'
           const fs = require('fs');
           const Parser = require('rss-parser');
-          const parser = new Parser();
+          const parser = new Parser({
+            customFields: {
+              item: [
+                ['media:content', 'mediaContent', { keepArray: false }]
+              ]
+            }
+          });
+
           (async () => {
             const feed = await parser.parseURL(encodeURI(
               'https://news.google.com/rss/search?q=府中市&hl=ja&gl=JP&ceid=JP:ja'
             ));
-            const items = feed.items.map(({ title, link, pubDate }) => ({
-              title, link, pubDate
-            }));
+            const items = feed.items.map(({ title, link, pubDate, mediaContent }) => {
+              const source = new URL(link).hostname.replace('www.', '');
+              return {
+                title,
+                link,
+                pubDate,
+                imageUrl: mediaContent?.url || null,
+                source,
+              };
+            });
             fs.writeFileSync('public/news.json', JSON.stringify(items, null, 2));
           })();
           NODE
