@@ -51,17 +51,19 @@ export default function FuchupoApp() {
 }
 
 // ───────── 子コンポーネント
-function NewsCard(a: Article) {
+function NewsCard(a: Article, idx: number) {
+  const headline = idx < 7 && a.shortTitle ? a.shortTitle : a.title;
   return (
     <a href={a.link} target="_blank" rel="noopener noreferrer" style={styles.card}>
       <div style={{ flex: 1 }}>
-        <h2 style={styles.cardTitle}>{a.title}</h2>
-        {a.description && <p style={styles.snippet}>{a.description}</p>}
+        <h2 style={styles.cardTitle}>{headline}</h2>
+        {idx < 7 && a.aiNote && <p style={styles.snippet}>{a.aiNote}</p>}
         <div style={styles.meta}>{formatPubDate(a.pubDate)}</div>
       </div>
     </a>
   );
 }
+
 
 // ───────── CSS
 const styles: Record<string, React.CSSProperties> = {
