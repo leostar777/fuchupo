@@ -107,24 +107,21 @@ async function main() {
   );
 
   // マージ & ソート & truncate
-  const merged = [...summarized, ...existing].sort(
-    (a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime(),
-  ).slice(0, MAX_ARTICLES);
+  const merged = [...summarized, ...existing]
+    .sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime())
+    .slice(0, MAX_ARTICLES);
 
   await fs.writeFile(NEWS_PATH, JSON.stringify(merged, null, 2));
+
+  // 👇 AI情報付き data.json も保存
+  const dataPath = 'public/data.json';
+  await fs.writeFile(dataPath, JSON.stringify(merged, null, 2));
+
   console.log(`✅ news.json updated: +${summarized.length} / total ${merged.length}`);
+  console.log(`✅ data.json also updated`);
 }
 
 main().catch((e) => {
   console.error(e);
   process.exit(1);
 });
-
-await fs.writeFile(NEWS_PATH, JSON.stringify(merged, null, 2));  // 既存
-
-// 👇 AI情報付き data.json も保存
-const dataPath = 'public/data.json';
-await fs.writeFile(dataPath, JSON.stringify(merged, null, 2));
-
-console.log(`✅ news.json updated: +${summarized.length} / total ${merged.length}`);
-console.log(`✅ data.json also updated`);
