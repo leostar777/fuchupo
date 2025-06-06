@@ -1,14 +1,13 @@
 {
   "compilerOptions": {
-    "target": "ES2022",                      // 最新JSをターゲット
-    "module": "ESNext",                       // ESM形式
-    "moduleResolution": "node",               // Node.js流のモジュール解決
-    "esModuleInterop": true,                  // import xxx from 'xxx' を許可
-    "allowSyntheticDefaultImports": true,     // デフォルトインポート許可
-    "forceConsistentCasingInFileNames": true, // ファイル名の大小文字の一貫性
-    "skipLibCheck": true,                     // 型定義チェックをスキップ
-    "outDir": "dist_scripts",                 // 出力ディレクトリ
-    "moduleDetection": "force"                // ESM専用のモジュール検出
+    "target": "ES2019",           // Top-level await を使うなら ES2017以上
+    "module": "ESNext",            // モジュールも ESNext
+    "moduleResolution": "node",
+    "lib": ["ES2019", "DOM"],      // 必要なlib
+    "esModuleInterop": true,       // importエラーを防ぐ
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,          // openaiの型チェックをスキップして速く
+    "outDir": "dist_scripts"       // 出力先
   },
-  "include": ["scripts/**/*.ts"]              // scripts以下の.tsをコンパイル対象
+  "include": ["scripts/**/*.ts"]
 }
