@@ -1,76 +1,33 @@
 import { useEffect, useState } from "react";
+import { useNews, Article } from "./lib/useNews";
 
-// ―――――――――――― 型定義 & フック ――――――――――――
-interface Article {
-  title: string;
-  link: string;
-  pubDate: string;
-}
-
-function useNews(): Article[] {
-  const [articles, setArticles] = useState<Article[]>([]);
-
-  useEffect(() => {
-    fetch("/fuchupo/news.json", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((data: Article[]) => {
-        const sortedData = data.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
-        setArticles(sortedData);
-      })
-      .catch(console.error);
-  }, []);
-
-  return articles;
-}
-
-function formatPubDate(pubDate: string): string {
+// ---- 日付フォーマット補助 ----
+function formatRelative(pubDate: string): string {
   const now = new Date();
   const pub = new Date(pubDate);
+  const diffH = Math.floor((now.getTime() - pub.getTime()) / 3_600_000);
+  if (diffH < 12) return `${diffH}時間前`;
 
-  const diffMs = now.getTime() - pub.getTime();
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-
-  if (diffHours < 12) {
-    return `${diffHours}時間前`;
-  }
-
-  const nowDate = now.getDate();
-  const pubDateNum = pub.getDate();
-  const nowMonth = now.getMonth();
-  const pubMonth = pub.getMonth();
-  const nowYear = now.getFullYear();
-  const pubYear = pub.getFullYear();
-
-  if (nowYear === pubYear && nowMonth === pubMonth) {
-    if (nowDate === pubDateNum) {
-      return pub.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric", weekday: "short" });
-    }
-    const yesterday = new Date(now);
-    yesterday.setDate(nowDate - 1);
-    if (
-      pubDateNum === yesterday.getDate() &&
-      pub.getMonth() === yesterday.getMonth() &&
-      pub.getFullYear() === yesterday.getFullYear()
-    ) {
-      return "昨日";
-    }
-  }
-
-  return pub.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric", weekday: "short" });
+  const formatter = new Intl.DateTimeFormat("ja-JP", {
+    month: "numeric",
+    day: "numeric",
+    weekday: "short",
+  });
+  return formatter.format(pub);
 }
 
-// ―――――――――――― ルートコンポーネント ――――――――――――
+// ---- ルートコンポーネント ----
 export default function FuchupoApp() {
   const news = useNews();
   const [now, setNow] = useState(() => new Date());
-  const [visibleCount, setVisibleCount] = useState(30);
+  const [visible, setVisible] = useState(30);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(id);
   }, []);
 
-  const dateStr = now.toLocaleDateString("ja-JP", {
+  const todayStr = now.toLocaleDateString("ja-JP", {
     month: "2-digit",
     day: "2-digit",
     weekday: "short",
@@ -78,21 +35,24 @@ export default function FuchupoApp() {
 
   return (
     <div style={styles.root}>
-      {/* Header */}
+      {/* ---------- Header ---------- */}
       <header style={styles.header}>
-        <strong style={styles.title}>ふちゅぽ</strong>
-        <span style={styles.date}>{dateStr} ☀️24°C</span>
+        <strong style={styles.logo}>ふちゅぽ</strong>
+        <span style={styles.today}>
+          {todayStr} &nbsp;☀️24°C
+        </span>
       </header>
 
-      {/* News list */}
+      {/* ---------- News list ---------- */}
       <main style={{ marginTop: 80 }}>
         {!news.length && <p>Fetching…</p>}
-        {news.slice(0, visibleCount).map((n, idx) => (
-          <NewsCard key={idx} title={n.title} link={n.link} pubDate={n.pubDate} />
+        {news.slice(0, visible).map((n, idx) => (
+          <NewsCard key={n.link} item={n} short={idx < 7} />
         ))}
-        {visibleCount < news.length && (
+
+        {visible < news.length && (
           <div style={{ textAlign: "center", marginTop: 16 }}>
-            <button style={styles.loadMoreButton} onClick={() => setVisibleCount((v) => v + 30)}>
+            <button style={styles.more} onClick={() => setVisible((v) => v + 30)}>
               もっと見る
             </button>
           </div>
@@ -102,34 +62,30 @@ export default function FuchupoApp() {
   );
 }
 
-// ―――――――――――― 子コンポーネント / Card ――――――――――――
-interface CardProps {
-  title: string;
-  link: string;
-  pubDate: string;
-}
-
-function NewsCard({ title, link, pubDate }: CardProps) {
-  const pubDateStr = formatPubDate(pubDate);
+// ---- 子コンポーネント ----
+function NewsCard({ item, short }: { item: Article; short: boolean }) {
+  const title = short ? item.shortTitle ?? item.headline : item.headline;
 
   return (
-    <a href={link} target="_blank" rel="noopener noreferrer" style={styles.card}>
+    <a href={item.link} target="_blank" rel="noopener noreferrer" style={styles.card}>
       <img
         src="https://placehold.co/96x64?text=IMG"
-        alt="thumb"
+        alt=""
         width={96}
         height={64}
         style={{ flexShrink: 0, borderRadius: 4, objectFit: "cover" }}
       />
       <div style={{ marginLeft: 12, flex: 1 }}>
         <h2 style={styles.cardTitle}>{title}</h2>
-        <div style={styles.meta}>{pubDateStr}</div>
+        <div style={styles.meta}>
+          {item.publisher} ・ {formatRelative(item.pubDate)}
+        </div>
       </div>
     </a>
   );
 }
 
-// ―――――――――――― simple inline CSS objects ――――――――――――
+// ---- styles ----
 const styles: Record<string, React.CSSProperties> = {
   root: {
     fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans JP', sans-serif",
@@ -150,14 +106,8 @@ const styles: Record<string, React.CSSProperties> = {
     boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
     zIndex: 10,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  date: {
-    fontSize: 16,
-    color: "#333",
-  },
+  logo: { fontSize: 20, fontWeight: "bold" },
+  today: { fontSize: 16, color: "#333" },
   card: {
     display: "flex",
     textDecoration: "none",
@@ -167,18 +117,9 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 4,
     transition: "background-color 0.15s",
   },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: 600,
-    lineHeight: 1.4,
-    margin: 0,
-  },
-  meta: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 4,
-  },
-  loadMoreButton: {
+  cardTitle: { fontSize: 15, fontWeight: 600, lineHeight: 1.4, margin: 0 },
+  meta: { fontSize: 12, color: "#666", marginTop: 4 },
+  more: {
     padding: "8px 16px",
     fontSize: 14,
     cursor: "pointer",
