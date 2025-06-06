@@ -1,24 +1,35 @@
 name: ingest
-
 on:
-  workflow_dispatch:        # 手動実行用
   schedule:
-    - cron: '0 * * * *'     # 毎時 0 分
+    - cron:  '0 * * * *'   # 毎時 00 分
+  workflow_dispatch:       # 手動トリガーも可
 
 jobs:
   ingest:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
-      - run: |
-          npm ci
-          npm run ingest
-        env:
-          # ----------- ここに GitHub Secrets をバインド ----------
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      - run: npm ci
+      - run: npm run ingest
+
+      # 生成した news.json をコミットして gh-pages へ反映
+      - name: commit & push
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update news.json [auto]"
+          branch: main      # ← main に直接コミットする場合
+          file_pattern: public/news.json
+
+      # ビルド & デプロイ (既存の CI で build 済なら不要)
+      - run: npm run build
+      - name: deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: dist
