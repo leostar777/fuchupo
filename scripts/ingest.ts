@@ -1,46 +1,62 @@
-#!/usr/bin/env -S node --loader ts-node/esm
-//------------------------------------------------------------
-//  ingest.ts
-//  - 1h ごとに RSS を取得して差分を抽出
-//  - GPT-4 で shortTitle を生成（まだダミー）
-//  - public/news.json を更新（最大 1000 件保持）
-//------------------------------------------------------------
-import 'dotenv/config';
-import fs from 'node:fs/promises';
-import path from 'node:path';
+// scripts/ingest.ts
+import fs from "node:fs/promises";
+import path from "node:path";
+import Parser from "rss-parser";
+import * as dotenv from "dotenv";
+dotenv.config();
 
-// ❶ 必須環境変数チェック
-const apiKey = process.env.OPENAI_API_KEY;
-if (!apiKey) {
-  console.error('❌ OPENAI_API_KEY is missing.  Set it in GitHub Secrets!');
+const RSS_URL = "https://news.google.com/rss/search?q=府中市&hl=ja&gl=JP&ceid=JP:ja";
+const OUTPUT = path.resolve("public/news.json");
+const MAX_ITEMS = 1000;
+
+interface Item {
+  title: string;
+  link: string;
+  pubDate: string;
+  shortTitle?: string; // ← GPT で後付け
+}
+
+async function fetchRss(): Promise<Item[]> {
+  const parser = new Parser();
+  const feed = await parser.parseURL(RSS_URL);
+  return feed.items.map((i) => ({
+    title: i.title ?? "",
+    link: i.link ?? "",
+    pubDate: i.pubDate ?? new Date().toUTCString(),
+  }));
+}
+
+async function loadExisting(): Promise<Item[]> {
+  try {
+    const json = await fs.readFile(OUTPUT, "utf-8");
+    return JSON.parse(json) as Item[];
+  } catch {
+    return [];
+  }
+}
+
+async function main() {
+  const existing = await loadExisting();
+  const latest = await fetchRss();
+
+  // 既存と重複しないものだけ追加
+  const combined = [...latest, ...existing].filter(
+    (item, idx, arr) => arr.findIndex((x) => x.link === item.link) === idx
+  );
+
+  // pubDate の降順でソートし、上限カット
+  combined.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+  const trimmed = combined.slice(0, MAX_ITEMS);
+
+  // ↓ GPT-4o を使うときはここで shortTitle を生成
+  // const apiKey = process.env.OPENAI_API_KEY;
+  // if (apiKey) { ... }
+
+  await fs.writeFile(OUTPUT, JSON.stringify(trimmed, null, 2), "utf-8");
+  console.log(`Saved ${trimmed.length} items to public/news.json`);
+}
+
+main().catch((e) => {
+  console.error(e);
   process.exit(1);
-}
-
-// ❷ RSS フィード（複数対応可）
-const feeds = (process.env.RSS_FEEDS ??
-  'https://news.google.com/rss/search?q=府中市&hl=ja&gl=JP&ceid=JP:ja'
-).split(',');
-
-// ❸ 既存データを読み込み（なければ空配列）
-const newsFile = path.resolve('public/news.json');
-let existing: any[] = [];
-try {
-  existing = JSON.parse(await fs.readFile(newsFile, 'utf8'));
-} catch (_) {
-  /* noop */
-}
-
-// ------------------ ここから本実装予定 ------------------
-// ※ いまはデモとして「同じデータをそのまま保存」だけ
-// ---------------------------------------------------------
-console.log('✅ ingest started with key length:', apiKey.length);
-console.log('ℹ️  feeds:', feeds.join(' , '));
-
-// TODO:
-//  1. fetch RSS → 新記事だけ抽出
-//  2. OpenAI ChatCompletion で shortTitle 生成
-//  3. existing とマージして最大 1000 件に整形
-//  4. 保存
-await fs.mkdir(path.dirname(newsFile), { recursive: true });
-await fs.writeFile(newsFile, JSON.stringify(existing, null, 2));
-console.log('📝 public/news.json updated (noop)');
+});
