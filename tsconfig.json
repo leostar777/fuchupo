@@ -1,16 +1,13 @@
 {
   "compilerOptions": {
-    "target": "ES2020",                // 少なくともES2015+, 推奨ES2020以上
-    "module": "ESNext",               // ネイティブESM形式で出力
-    "moduleResolution": "NodeNext",   // NodeのESM解決ルールを使用
-    "esModuleInterop": true,          // デフォルトインポートを許容
-    "allowSyntheticDefaultImports": true, // 上記とセットで有効になる
-    "strict": true,                   // 厳密な型チェック（必要に応じて）
-    "skipLibCheck": true,             // ライブラリの型チェックをスキップ
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022", "DOM"],
+    "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
     "outDir": "dist_scripts"
   },
-  "include": [
-    "scripts/**/*.ts"                // コンパイル対象のTSファイルパターン
-  ]
+  "include": ["scripts/**/*.ts"]
 }
