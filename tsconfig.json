@@ -1,13 +1,16 @@
 {
   "compilerOptions": {
-    "target": "ES2019",           // Top-level await を使うなら ES2017以上
-    "module": "ESNext",            // モジュールも ESNext
-    "moduleResolution": "node",
-    "lib": ["ES2019", "DOM"],      // 必要なlib
-    "esModuleInterop": true,       // importエラーを防ぐ
+    "target": "ES2020",                // 少なくともES2015+, 推奨ES2020以上
+    "module": "ESNext",               // ネイティブESM形式で出力
+    "moduleResolution": "NodeNext",   // NodeのESM解決ルールを使用
+    "esModuleInterop": true,          // デフォルトインポートを許容
+    "allowSyntheticDefaultImports": true, // 上記とセットで有効になる
+    "strict": true,                   // 厳密な型チェック（必要に応じて）
+    "skipLibCheck": true,             // ライブラリの型チェックをスキップ
     "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,          // openaiの型チェックをスキップして速く
-    "outDir": "dist_scripts"       // 出力先
+    "outDir": "dist_scripts"
   },
-  "include": ["scripts/**/*.ts"]
+  "include": [
+    "scripts/**/*.ts"                // コンパイル対象のTSファイルパターン
+  ]
 }
