@@ -1,9 +1,9 @@
-name: ingest          # ジョブ名（任意）
+name: ingest
 
 on:
+  workflow_dispatch:        # 手動実行用
   schedule:
-    - cron:  '0 * * * *'   # 毎時 0 分に実行
-  workflow_dispatch:       # Actions タブから手動実行も可
+    - cron: '0 * * * *'     # 毎時 0 分
 
 jobs:
   ingest:
@@ -12,6 +12,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 以下は動作確認用の “空” ステップ
-      - name: Echo placeholder
-        run: echo "📥 ingest skeleton – OK"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: |
+          npm ci
+          npm run ingest
+        env:
+          # ----------- ここに GitHub Secrets をバインド ----------
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
