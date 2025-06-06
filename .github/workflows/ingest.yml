@@ -15,16 +15,17 @@ jobs:
           node-version: 20
           cache: npm
 
-      - run: npm ci
+      # ⬇️ ここを「npm install」に変更！
+      - run: npm install
       - run: npm run ingest
 
-      # 生成した news.json と data.json をコミットして gh-pages へ反映
+      # 生成した data.json をコミットして gh-pages へ反映
       - name: commit & push
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore: update news.json, data.json [auto]"
-          branch: main
-          file_pattern: public/*.json   # ← ここを変更！
+          commit_message: "chore: update data.json [auto]"
+          branch: main      # ← main に直接コミットする場合
+          file_pattern: public/data.json
 
       - run: npm run build
       - name: deploy to gh-pages
