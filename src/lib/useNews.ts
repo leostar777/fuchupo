@@ -7,6 +7,8 @@ export interface Article {
   description?: string;
   creator?: string;
   categories?: string[];
+  shortTitle: string;
+  aiNote: string;
 }
 
 export function useNews() {
