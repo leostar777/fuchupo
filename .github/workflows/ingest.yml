@@ -18,13 +18,13 @@ jobs:
       - run: npm ci
       - run: npm run ingest
 
-      # 生成した news.json をコミットして gh-pages へ反映
+      # 生成した data.json をコミットして gh-pages へ反映
       - name: commit & push
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore: update news.json [auto]"
+          commit_message: "chore: update data.json [auto]"
           branch: main      # ← main に直接コミットする場合
-          file_pattern: public/news.json
+          file_pattern: public/data.json
 
       # ビルド & デプロイ (既存の CI で build 済なら不要)
       - run: npm run build
