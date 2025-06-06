@@ -1,0 +1,17 @@
+name: ingest          # ジョブ名（任意）
+
+on:
+  schedule:
+    - cron:  '0 * * * *'   # 毎時 0 分に実行
+  workflow_dispatch:       # Actions タブから手動実行も可
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # 以下は動作確認用の “空” ステップ
+      - name: Echo placeholder
+        run: echo "📥 ingest skeleton – OK"
