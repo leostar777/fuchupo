@@ -7,6 +7,8 @@ on:
 jobs:
   ingest:
     runs-on: ubuntu-latest
+    env: # ⬅️ ここ追加！
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -15,7 +17,6 @@ jobs:
           node-version: 20
           cache: npm
 
-      # ⬇️ ここを「npm install」に変更！
       - run: npm install
       - run: npm run ingest
 
