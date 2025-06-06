@@ -119,3 +119,12 @@ main().catch((e) => {
   console.error(e);
   process.exit(1);
 });
+
+await fs.writeFile(NEWS_PATH, JSON.stringify(merged, null, 2));  // 既存
+
+// 👇 AI情報付き data.json も保存
+const dataPath = 'public/data.json';
+await fs.writeFile(dataPath, JSON.stringify(merged, null, 2));
+
+console.log(`✅ news.json updated: +${summarized.length} / total ${merged.length}`);
+console.log(`✅ data.json also updated`);
