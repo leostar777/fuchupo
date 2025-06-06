@@ -1,12 +1,14 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "node",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "outDir": "dist_scripts"  // 生成ファイルの保存先
+    "outDir": "dist_scripts",
+    "moduleDetection": "force",
+    "allowSyntheticDefaultImports": true
   },
   "include": ["scripts/**/*.ts"]
 }
